@@ -1,2 +1,7 @@
+# Files
 .env
+*.json
+
+# Directories
 /venv
+__pycache__
