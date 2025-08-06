@@ -2,10 +2,24 @@ import argparse
 import logging
 from typing import List, Dict, Any
 
+from pinecone_client.client import VectorDBClient
 from scraper_client.client import ScraperClient  # Custom client for interacting with Apify
 
 # Configure logging level
 logging.basicConfig(level=logging.INFO)
+
+def load_excercise_metadata(filepath) -> None:
+    """Starts the vector uploading process
+
+    Args:
+        filepath (str): Filepath to the scaper ouput from the root folder
+    """
+    vector_db = VectorDBClient('gym-excercises')
+    vector_db.upload_vectors(
+        namespace='excercises',
+        text_metadata_batched=vector_db._load_text_metadata(filepath)
+    )
+    logging.info('Vectors uploading process ended successfully!')
 
 def start_apify_scraper() -> None:
     """Starts the Apify scraper using a custom ScraperClient and logs the number of exercises retrieved."""
@@ -31,6 +45,10 @@ def main() -> None:
         action='store_true',
         help='Starts Apify exercise scraping task'
     )
+    parser.add_argument(
+        '--load-excercises-metadata',
+        help='Starts Apify exercise scraping task'
+    )
     
     # Parse command-line arguments
     args = parser.parse_args()
@@ -38,6 +56,10 @@ def main() -> None:
     # Trigger scraper if the flag is provided
     if args.start_crawling:
         start_apify_scraper()
+
+    # Run the vector uploading process
+    if args.load_excercises_metadata:
+        load_excercise_metadata(args.load_excercises_metadata)
 
 if __name__ == '__main__':
     main()
