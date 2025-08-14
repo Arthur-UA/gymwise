@@ -1,3 +1,9 @@
 apify-client==1.10.0
 python-dotenv
-pinecone==7.0.2
+fastapi
+pinecone
+pinecone[asyncio]
+langchain-ollama
+langchain-text-splitters
+langchain-community
+langgraph

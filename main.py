@@ -1,12 +1,15 @@
+import os
 import argparse
 import logging
 from typing import List, Dict, Any
 
+from dotenv import load_dotenv
 from pinecone_client.client import VectorDBClient
 from scraper_client.client import ScraperClient  # Custom client for interacting with Apify
 
-# Configure logging level
+# Configuration
 logging.basicConfig(level=logging.INFO)
+load_dotenv(override=True)
 
 def load_excercise_metadata(filepath) -> None:
     """Starts the vector uploading process
@@ -14,7 +17,10 @@ def load_excercise_metadata(filepath) -> None:
     Args:
         filepath (str): Filepath to the scaper ouput from the root folder
     """
-    vector_db = VectorDBClient('gym-excercises')
+    vector_db = VectorDBClient(
+        index_name=os.environ["PC_INDEX_NAME"],
+        namespace=os.environ["PC_NAMESPACE"]
+    )
     vector_db.upload_vectors(
         namespace='excercises',
         text_metadata_batched=vector_db._load_text_metadata(filepath)

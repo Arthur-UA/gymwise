@@ -3,7 +3,7 @@ import json
 import logging
 from itertools import batched
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
 from pinecone import Pinecone
@@ -13,9 +13,10 @@ load_dotenv(override=True)
 class VectorDBClient:
     """Initializes the Pinecone vector DB, supports vector loading with additional metadata"""
 
-    def __init__(self, index_name: str):
+    def __init__(self, index_name: str, namespace: str):
         self.db = Pinecone(api_key=os.environ['PINECONE_KEY'])
         self.index_name = index_name
+        self.namespace = namespace
 
         if not self.db.has_index(index_name):
             self.db.create_index_for_model(
@@ -27,24 +28,52 @@ class VectorDBClient:
                     "field_map": {"text": "chunk_text"}
                 }
             )
+        self.index_host = self.db.describe_index(self.index_name)['host']
+        self.index = self.db.Index(host=self.index_host)
+        self.aindex: Optional[object] = None
     
-    def upload_vectors(self, namespace: str, text_metadata_batched: List[List[Dict[str, str]]]) -> None:
+    def upload_vectors(self, text_metadata_batched: List[List[Dict[str, str]]]) -> None:
         """Uploads vectors to a Pinecone DB
         
         Args:
             namespace (str): Specific namespace,
             text_metadata_batched (List[List[Dict[str, str]]]): Metadata to be loaded
         """
-        index_host = self.db.describe_index(self.index_name)['host']
-        index = self.db.Index(host=index_host)
-
         try:
             for batch in text_metadata_batched:
-                index.upsert_records(
-                    namespace, batch
+                self.index.upsert_records(
+                    self.namespace, batch
                 )
         except Exception as _e:
             logging.error(f'An error occured during uploading:\n{_e}')
+    
+    async def query_dense_index(self, query: str, filters: Dict[str, List[str]]):
+        """Makes a similarity search through the excersices in Pinecone DB
+        Args:
+            query (str): Question from a user,
+            filters (Dict[str, List[str]]): Equipment and muscle group filtering
+        """
+        if not self.aindex:
+            self.aindex = self.db.IndexAsyncio(host=self.index_host)
+        
+        # Build filter object conditionally
+        pinecone_filter = {}
+        if filters:
+            if filters.get("equipment"):
+                pinecone_filter["equipment"] = {"$in": filters["equipment"]}
+            if filters.get("muscleGroup"):
+                pinecone_filter["muscleGroup"] = {"$in": filters["muscleGroup"]}
+
+        return await self.aindex.search_records(
+            namespace=self.namespace,
+            query={
+                "inputs": {"text": query}, 
+                "top_k": 4,
+                # Only include the filter if we actually have any constrainSearchRecordsResponse
+                **({"filter": pinecone_filter} if pinecone_filter else {})
+            },
+            fields=["equipment", "muscleGroup", "chunk_text", "imageUrl"]
+        )
 
     @staticmethod
     def _load_text_metadata(filepath: str) -> List[List[Dict[str, str]]]:
@@ -75,6 +104,5 @@ class VectorDBClient:
 if __name__ == '__main__':
     vector_db = VectorDBClient('gym-excercises')
     vector_db.upload_vectors(
-        namespace='excercises',
         text_metadata_batched=vector_db._load_text_metadata('scraper_client/scraper_output.json')
     )
