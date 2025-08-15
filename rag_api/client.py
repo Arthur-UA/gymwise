@@ -57,7 +57,28 @@ class RAGPipeline:
 
     async def _generate(self, state: State):
         docs_content = "\n\n".join(d.page_content for d in state["context"])
-        messages = await PROMPT.ainvoke({"question": state["question"], "context": docs_content})
+        # Directly build the messages like your Hub prompt would have done
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a friendly RAG personal trainer.\n"
+                    "Answer the user's question ONLY using the provided context.\n"
+                    "If you can answer, explain how to do the exercise in short bullet points, focusing on clarity and safety.\n"
+                    "Remember: the user does NOT see the context, so never refer to it directly—use its information naturally in your answer.\n"
+                    "If the context doesn't contain the answer, reply with something funny like: "
+                    "'You should probably ask ChatGPT — I don't have the answer for this question 😵‍💫😵‍💫'\n"
+                    "Avoid adding extra info not found in the context; if unsure better say you don't know or use the funny response."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Question:\n{state['question']}\n\n"
+                    f"Context:\n{docs_content}"
+                ),
+            },
+        ]
 
         answer = await self.llm_model.ainvoke(messages)
         return {"answer": answer}
