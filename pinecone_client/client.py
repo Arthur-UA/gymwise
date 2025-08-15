@@ -72,7 +72,7 @@ class VectorDBClient:
                 # Only include the filter if we actually have any constrainSearchRecordsResponse
                 **({"filter": pinecone_filter} if pinecone_filter else {})
             },
-            fields=["equipment", "muscleGroup", "chunk_text", "imageUrl"]
+            fields=["equipment", "muscleGroup", "chunk_text", "imageUrl", "url"]
         )
 
     @staticmethod

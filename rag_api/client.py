@@ -47,7 +47,8 @@ class RAGPipeline:
                 metadata={
                     "equipment": rec.get("fields", {}).get("equipment"),
                     "muscleGroup": rec.get("fields", {}).get("muscleGroup"),
-                    "imageUrl": rec.get("fields", {}).get("imageUrl")
+                    "imageUrl": rec.get("fields", {}).get("imageUrl"),
+                    "url": rec.get("fields", {}).get("url"),
                 }
             )
             for rec in hits
