@@ -1,0 +1,46 @@
+networks:
+  app_net: {}
+
+volumes:
+  ollama_models: {}
+
+services:
+  ollama:
+    image: ollama/ollama:0.3.14
+    container_name: ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+    networks: [app_net]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: api
+    env_file: [.env]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+    depends_on:
+      ollama:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    networks: [app_net]
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    container_name: bot
+    env_file: [.env]
+    environment:
+      RAG_API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_started
+    networks: [app_net]

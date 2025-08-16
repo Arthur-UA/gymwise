@@ -1,6 +1,9 @@
 apify-client==1.10.0
 python-dotenv
 fastapi
+uvicorn[standard]
+pydantic>=2
+httpx
 pinecone
 pinecone[asyncio]
 langchain-ollama
