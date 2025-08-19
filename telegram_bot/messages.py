@@ -1,7 +1,7 @@
 # telegram_bot/messages.py
 
 START = (
-    "Hey! I’m GymWiseAI 🏋️‍♂️\n"
+    "Hey, {username}! I’m GymWiseAI 🏋️‍♂️\n"
     "I explain exercises clearly and safely.\n\n"
     "Try /ask_question to:\n"
     "• Pick filters (e.g., Muscle Group, Equipment)\n"

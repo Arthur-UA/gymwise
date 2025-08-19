@@ -30,6 +30,7 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
+    restart: unless-stopped
     networks: [app_net]
 
   bot:
@@ -43,4 +44,5 @@ services:
     depends_on:
       api:
         condition: service_started
+    restart: unless-stopped
     networks: [app_net]

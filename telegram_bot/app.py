@@ -93,7 +93,7 @@ async def on_start(message: Message):
         resize_keyboard=True,
         one_time_keyboard=False
     )
-    await message.answer(msg.START, reply_markup=kb)
+    await message.answer(msg.START.format(username=message.from_user.first_name), reply_markup=kb)
 
 
 @dp.message(Command("about"))
